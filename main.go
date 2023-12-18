@@ -26,4 +26,6 @@ func SendMail(password string) {
 	if err != nil {
 		fmt.Println("Error ", err.Error())
 	}
+
+	fmt.Println("Success")
 }
