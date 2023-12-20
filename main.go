@@ -31,14 +31,17 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 	subject := req.Subject
 
 	mailInit := mail.NewV3MailInit(from, subject, to)
+	mailInit.SetTemplateID(req.TemplateID)
+
 	if req.ReplyTo.Name != "" && req.ReplyTo.Address != "" {
 		mailInit.SetReplyTo(mail.NewEmail(req.ReplyTo.Name, req.ReplyTo.Address))
 	}
 
 	setNewPersonalization := mail.NewPersonalization()
-	setNewPersonalization.Substitutions = req.Subs
-	mailInit.AddPersonalizations(setNewPersonalization)
-	mailInit.SetTemplateID(req.TemplateID)
+	for k, v := range req.Subs {
+		setNewPersonalization.SetSubstitution(k, v)
+		mailInit.AddPersonalizations(setNewPersonalization)
+	}
 
 	for i := 0; i < len(req.Attachments); i++ {
 		setNewAttachments := mail.NewAttachment()
