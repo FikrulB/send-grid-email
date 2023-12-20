@@ -11,7 +11,6 @@ import (
 const tryLimit = 5
 
 func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error) {
-
 	if req.ApiKey == "" {
 		err = errors.New("Please provide a api key")
 		return
@@ -32,6 +31,10 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 	subject := req.Subject
 
 	mailInit := mail.NewV3MailInit(from, subject, to)
+	if req.ReplyTo.Name != "" && req.ReplyTo.Address != "" {
+		mailInit.SetReplyTo(mail.NewEmail(req.ReplyTo.Name, req.ReplyTo.Address))
+	}
+
 	setNewPersonalization := mail.NewPersonalization()
 	setNewPersonalization.Substitutions = req.Subs
 	mailInit.AddPersonalizations(setNewPersonalization)

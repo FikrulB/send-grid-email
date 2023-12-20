@@ -13,6 +13,7 @@ type (
 	RequestSendGrid struct {
 		From        User
 		To          User
+		ReplyTo     User
 		Subject     string
 		TemplateID  string
 		Username    string
