@@ -2,7 +2,6 @@ package sendgridemail
 
 import (
 	"fmt"
-	"log"
 	"net/smtp"
 
 	"github.com/FikrulB/send-grid-email/domain"
@@ -35,11 +34,10 @@ func SendMail(password string) {
 	fmt.Println("Success")
 }
 
-func SendGridEmail(req domain.RequestSendGrid) {
+func SendGridEmail(req domain.RequestSendGrid) (interface{}, error) {
 	from := mail.NewEmail(req.From.Name, req.From.Address)
 	to := mail.NewEmail(req.To.Name, req.To.Address)
 	subject := req.Subject
-	// content := mail.NewContent("text/html", "I'm replacing the <strong>body tag</strong>")
 
 	m := mail.NewV3MailInit(from, subject, to)
 
@@ -49,15 +47,9 @@ func SendGridEmail(req domain.RequestSendGrid) {
 
 	client := sendgrid.NewSendClient(req.ApiKey)
 	response, err := client.Send(m)
-	fmt.Println(response.StatusCode)
-	fmt.Println(response.Body)
-	fmt.Println(response.Headers)
-
 	if err != nil {
-		log.Println(err)
-	} else {
-		fmt.Println(response.StatusCode)
-		fmt.Println(response.Body)
-		fmt.Println(response.Headers)
+		return nil, err
 	}
+
+	return response, nil
 }
