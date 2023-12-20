@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/FikrulB/send-grid-email/domain"
-	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
@@ -41,8 +40,9 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 		setNewPersonalization := mail.NewPersonalization()
 		for k, v := range req.Subs {
 			setNewPersonalization.SetSubstitution(k, v)
-			setNewPersonalization.AddTos(to)
-			mailInit.AddPersonalizations(setNewPersonalization)
+			mailInit.Personalizations = append(mailInit.Personalizations, setNewPersonalization)
+			// setNewPersonalization.AddTos(to)
+			// mailInit.AddPersonalizations(setNewPersonalization)
 		}
 	}
 
@@ -52,15 +52,15 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 		mailInit.AddAttachment(setNewAttachments)
 	}
 
-	for x := 0; x < tryLimit; x++ {
-		client := sendgrid.NewSendClient(req.ApiKey)
-		response, err = client.Send(mailInit)
-		if err != nil {
-			continue
-		}
+	// for x := 0; x < tryLimit; x++ {
+	// 	client := sendgrid.NewSendClient(req.ApiKey)
+	// 	response, err = client.Send(mailInit)
+	// 	if err != nil {
+	// 		continue
+	// 	}
 
-		break
-	}
-
+	// 	break
+	// }
+	response = mailInit
 	return
 }
