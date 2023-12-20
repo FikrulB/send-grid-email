@@ -3,25 +3,52 @@ package sendgridemail
 import (
 	"errors"
 
-	"github.com/FikrulB/send-grid-email/domain"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+type (
+	RequestSendGrid struct {
+		From        User
+		To          User
+		ReplyTo     User
+		Subject     string
+		TemplateID  string
+		Username    string
+		Subs        map[string]string
+		Attachments []Attachment
+		ApiKey      string
+	}
+
+	User struct {
+		Name    string
+		Address string
+	}
+
+	Attachment struct {
+		Content     string
+		Type        string
+		Name        string
+		Filename    string
+		Disposition string
+		ContentID   string
+	}
+)
+
 const tryLimit = 5
 
-func SendGridEmail(req domain.RequestSendGrid) (err error) {
+func SendGridEmail(req RequestSendGrid) (err error) {
 	if req.ApiKey == "" {
 		err = errors.New("Please provide a api key")
 		return
 	}
 
-	if req.From.Name == "" || req.From.Address == "" {
+	if req.From.Address == "" {
 		err = errors.New("Error Email From")
 		return
 	}
 
-	if req.To.Name == "" || req.To.Address == "" {
+	if req.To.Address == "" {
 		err = errors.New("Error Email To")
 		return
 	}
@@ -33,21 +60,26 @@ func SendGridEmail(req domain.RequestSendGrid) (err error) {
 	mailInit := mail.NewV3MailInit(from, subject, to)
 	mailInit.SetTemplateID(req.TemplateID)
 
-	if req.ReplyTo.Name != "" && req.ReplyTo.Address != "" {
+	if (req.ReplyTo.Name != "" && req.ReplyTo.Address != "") || req.ReplyTo.Address != "" {
 		mailInit.SetReplyTo(mail.NewEmail(req.ReplyTo.Name, req.ReplyTo.Address))
 	}
 
-	if len(req.Subs) > 0 {
-		for x := 0; x < len(mailInit.Personalizations); x++ {
-			for k, v := range req.Subs {
-				mailInit.Personalizations[x].SetSubstitution(k, v)
-			}
+	for x := 0; x < len(mailInit.Personalizations); x++ {
+		for k, v := range req.Subs {
+			mailInit.Personalizations[x].SetSubstitution(k, v)
 		}
 	}
 
 	for i := 0; i < len(req.Attachments); i++ {
 		setNewAttachments := mail.NewAttachment()
-		setNewAttachments = &req.Attachments[i]
+		setNewAttachments = &mail.Attachment{
+			Content:     req.Attachments[i].Content,
+			Type:        req.Attachments[i].Type,
+			Name:        req.Attachments[i].Name,
+			Filename:    req.Attachments[i].Filename,
+			Disposition: req.Attachments[i].Disposition,
+			ContentID:   req.Attachments[i].ContentID,
+		}
 		mailInit.AddAttachment(setNewAttachments)
 	}
 
