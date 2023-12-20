@@ -1,55 +1,57 @@
 package sendgridemail
 
 import (
-	"fmt"
-	"net/smtp"
+	"errors"
 
 	"github.com/FikrulB/send-grid-email/domain"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
-func SendMail(password string) {
-	auth := smtp.PlainAuth(
-		"",
-		"mfikrulb@gmail.com",
-		password,
-		"smtp.gmail.com",
-	)
+const tryLimit = 5
 
-	msg := "Subject: This is a Subject\nThis is a Message"
+func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error) {
 
-	err := smtp.SendMail(
-		"smtp.gmail.com:587",
-		auth,
-		"mfikrulb@gmail.com",
-		[]string{"mfikrulb@gmail.com"},
-		[]byte(msg),
-	)
-
-	if err != nil {
-		fmt.Println("Error ", err.Error())
+	if req.ApiKey == "" {
+		err = errors.New("Please provide a api key")
+		return
 	}
 
-	fmt.Println("Success")
-}
+	if req.From.Name == "" || req.From.Address == "" {
+		err = errors.New("Error Email From")
+		return
+	}
 
-func SendGridEmail(req domain.RequestSendGrid) (interface{}, error) {
+	if req.To.Name == "" || req.To.Address == "" {
+		err = errors.New("Error Email To")
+		return
+	}
+
 	from := mail.NewEmail(req.From.Name, req.From.Address)
 	to := mail.NewEmail(req.To.Name, req.To.Address)
 	subject := req.Subject
 
-	m := mail.NewV3MailInit(from, subject, to)
+	mailInit := mail.NewV3MailInit(from, subject, to)
+	setNewPersonalization := mail.NewPersonalization()
+	setNewPersonalization.Substitutions = req.Subs
+	mailInit.AddPersonalizations(setNewPersonalization)
+	mailInit.SetTemplateID(req.TemplateID)
 
-	m.Personalizations[0].SetSubstitution("-error-", req.ErrorMessage)
-	m.Personalizations[0].SetSubstitution("-name-", req.Username)
-	m.SetTemplateID(req.TemplateID)
-
-	client := sendgrid.NewSendClient(req.ApiKey)
-	response, err := client.Send(m)
-	if err != nil {
-		return nil, err
+	for i := 0; i < len(req.Attachments); i++ {
+		setNewAttachments := mail.NewAttachment()
+		setNewAttachments = &req.Attachments[i]
+		mailInit.AddAttachment(setNewAttachments)
 	}
 
-	return response, nil
+	for x := 0; x < tryLimit; x++ {
+		client := sendgrid.NewSendClient(req.ApiKey)
+		response, err = client.Send(mailInit)
+		if err != nil {
+			continue
+		}
+
+		break
+	}
+
+	return
 }

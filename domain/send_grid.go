@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
+)
+
 type (
 	User struct {
 		Name    string `json:"name"`
@@ -7,12 +11,13 @@ type (
 	}
 
 	RequestSendGrid struct {
-		From         User   `json:"from"`
-		To           User   `json:"to"`
-		Subject      string `json:"subject"`
-		TemplateID   string `json:"template_id"`
-		Username     string `json:"username"`
-		ErrorMessage string `json:"error_message"`
-		ApiKey       string `json:"api_key"`
+		From        User
+		To          User
+		Subject     string
+		TemplateID  string
+		Username    string
+		Subs        map[string]string
+		Attachments []mail.Attachment
+		ApiKey      string
 	}
 )
