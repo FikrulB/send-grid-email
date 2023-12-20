@@ -37,10 +37,12 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 		mailInit.SetReplyTo(mail.NewEmail(req.ReplyTo.Name, req.ReplyTo.Address))
 	}
 
-	setNewPersonalization := mail.NewPersonalization()
-	for k, v := range req.Subs {
-		setNewPersonalization.SetSubstitution(k, v)
-		mailInit.AddPersonalizations(setNewPersonalization)
+	if len(req.Attachments) > 0 {
+		setNewPersonalization := mail.NewPersonalization()
+		for k, v := range req.Subs {
+			setNewPersonalization.SetSubstitution(k, v)
+			mailInit.AddPersonalizations(setNewPersonalization)
+		}
 	}
 
 	for i := 0; i < len(req.Attachments); i++ {
