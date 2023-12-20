@@ -41,6 +41,7 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 		setNewPersonalization := mail.NewPersonalization()
 		for k, v := range req.Subs {
 			setNewPersonalization.SetSubstitution(k, v)
+			setNewPersonalization.AddTos(to)
 			mailInit.AddPersonalizations(setNewPersonalization)
 		}
 	}
