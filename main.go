@@ -4,12 +4,13 @@ import (
 	"errors"
 
 	"github.com/FikrulB/send-grid-email/domain"
+	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 const tryLimit = 5
 
-func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error) {
+func SendGridEmail(req domain.RequestSendGrid) (err error) {
 	if req.ApiKey == "" {
 		err = errors.New("Please provide a api key")
 		return
@@ -37,12 +38,10 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 	}
 
 	if len(req.Subs) > 0 {
-		setNewPersonalization := mail.NewPersonalization()
-		for k, v := range req.Subs {
-			setNewPersonalization.SetSubstitution(k, v)
-			mailInit.Personalizations = append(mailInit.Personalizations, setNewPersonalization)
-			// setNewPersonalization.AddTos(to)
-			// mailInit.AddPersonalizations(setNewPersonalization)
+		for x := 0; x < len(mailInit.Personalizations); x++ {
+			for k, v := range req.Subs {
+				mailInit.Personalizations[x].SetSubstitution(k, v)
+			}
 		}
 	}
 
@@ -52,15 +51,16 @@ func SendGridEmail(req domain.RequestSendGrid) (response interface{}, err error)
 		mailInit.AddAttachment(setNewAttachments)
 	}
 
-	// for x := 0; x < tryLimit; x++ {
-	// 	client := sendgrid.NewSendClient(req.ApiKey)
-	// 	response, err = client.Send(mailInit)
-	// 	if err != nil {
-	// 		continue
-	// 	}
+	for x := 0; x < tryLimit; x++ {
+		client := sendgrid.NewSendClient(req.ApiKey)
+		_, err = client.Send(mailInit)
+		if err != nil {
+			continue
+		}
 
-	// 	break
-	// }
-	response = mailInit
+		err = nil
+		break
+	}
+
 	return
 }
